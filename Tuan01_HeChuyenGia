@@ -1,0 +1,72 @@
+class HeChuyenGiaAnUong:
+    def __init__(self):
+        self.rules = {
+            "tu_nau_an": [
+                ("co_nguyen_lieu", "co"),
+                ("suc_khoe", "tot"),
+                ("thoi_gian", "du")
+            ],
+            "mua_do_an_san": [
+                ("thoi_gian", "it"),
+                ("co_tien", "du")
+            ],
+            "di_cho": [
+                ("mua_nguyen_lieu", "co"),
+                ("cho_gan", "co")
+            ],
+            "di_sieu_thi": [
+                ("mua_nguyen_lieu", "co"),
+                ("cho_gan", "khong")
+            ],
+            "di_bo": [
+                ("phuong_tien", "khong"),
+                ("khoang_cach", "gan")
+            ],
+            "di_xe_may": [
+                ("phuong_tien", "co"),
+                ("khoang_cach", "xa")
+            ]
+        }
+
+    def hoi_nguoi_dung(self):
+        print("HE CHUYEN GIA HO TRO AN UONG: ")
+        self.facts = {}
+        self.facts["co_nguyen_lieu"] = input("Ban co san nguyen lieu o nha khong? (co/khong): ")
+        self.facts["suc_khoe"] = input("Suc khoe cua ban hom nay? (tot/yeu): ")
+        self.facts["thoi_gian"] = input("Ban co nhieu thoi gian khong? (du/it): ")
+        self.facts["co_tien"] = input("Ban co du tien de mua do an san khong? (du/khong): ")
+        self.facts["mua_nguyen_lieu"] = input("Ban co muon mua them nguyen lieu khong? (co/khong): ")
+        self.facts["cho_gan"] = input("Gan nha ban co cho truyen thong khong? (co/khong): ")
+        self.facts["phuong_tien"] = input("Ban co xe may khong? (co/khong): ")
+        self.facts["khoang_cach"] = input("Khoang cach den noi mua sam? (gan/xa): ")
+
+    def suy_luan(self):
+        ket_qua = []
+        for ten_quyet_dinh, dieu_kien in self.rules.items():
+            if all(self.facts.get(attr) == val for attr, val in dieu_kien):
+                ket_qua.append(ten_quyet_dinh)
+        return ket_qua if ket_qua else ["khong_xac_dinh"]
+
+    def chay(self):
+        self.hoi_nguoi_dung()
+        ket_qua = self.suy_luan()
+        print("\n KET QUA: ")
+        for qd in ket_qua:
+            if qd == "tu_nau_an":
+                print("Ban nen tu nau an tai nha.")
+            elif qd == "mua_do_an_san":
+                print("Ban nen mua do an co san o ngoai.")
+            elif qd == "di_cho":
+                print("Ban nen di cho de mua nguyen lieu.")
+            elif qd == "di_sieu_thi":
+                print("Ban nen di sieu thi hoac bach hoa de mua nguyen lieu.")
+            elif qd == "di_bo":
+                print("Ban nen di bo toi noi mua sam.")
+            elif qd == "di_xe_may":
+                print("Ban nen di xe may toi noi mua sam.")
+            elif qd == "khong_xac_dinh":
+                print("Khong the dua ra quyet dinh, ban can tu can nhac.")
+
+if __name__ == "__main__":
+    system = HeChuyenGiaAnUong()
+    system.chay()
