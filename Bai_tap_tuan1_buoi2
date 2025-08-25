@@ -1,0 +1,94 @@
+#bai1
+import numpy as np
+import math
+arr = np.array([-2, 6, 3, 10, 15, 48])
+
+print("[3 15]:", arr[2:6:2])
+print("[6 10 48]:", arr[1:])
+print("[10 15 48]:", arr[3:])
+print("[48 15 10]:", arr[:1:-1])
+
+#bai2
+import numpy as np
+import math
+
+a = np.array([[1, 2, 3], [4, 5, 6]])
+
+print("a.max():", a.max())
+print("a.max(0):", a.max(0))
+print("a.max(1):", a.max(1))
+
+#bai3
+import math
+
+def giai_pt(*heso):
+    if len(heso) == 2:
+        a, b = heso
+        if a == 0:
+            if b == 0:
+                return "pt co vo so nghiem"
+            else:
+                return "pt co vo nghiem"
+        else:
+            return f"x = {-b / a}"
+
+    elif len(heso) == 3:  # Giải PT bậc 2: ax^2 + bx + c = 0
+        a, b, c = heso
+        if a == 0:  # Trường hợp thoái hóa về bậc 1
+            return giai_pt(b, c)
+        delta = b ** 2 - 4 * a * c
+        if delta < 0:
+            return "pt co vo nghiem"
+        elif delta == 0:
+            return f"pt co nghiem kep: x = {-b / (2 * a)}"
+        else:
+            x1 = (-b + math.sqrt(delta)) / (2 * a)
+            x2 = (-b - math.sqrt(delta)) / (2 * a)
+            return f"pt co 2 nghiem: x1 = {x1}, x2 = {x2}"
+
+    else:
+        return "phai nhap 2 hoac 3 he so!"
+
+
+
+n = int(input("so luong he so (2/3)? "))
+
+heso = []
+for i in range(n):
+    h = float(input(f"nhap he so thu{i + 1}: "))
+    heso.append(h)
+
+print(giai_pt(*heso))
+
+#bai4
+import math
+
+def cos_taylor(x, epsilon=1e-6):
+    t = 1
+    r = 1
+    n = 1
+    while abs(t) > epsilon:
+        t *= -x**2 / ((2*n-1) * (2*n))
+        r += t
+        n += 1
+    return r
+
+x = float(input("x = "))
+
+print(f"cos({x}) xap xi = {cos_taylor(x)} (theo Taylor series)")
+print(f"cos({x}) = {math.cos(x)} (theo math.cos)")
+
+#bai5
+def mon_no(ma_sv, bang_diem):
+    if ma_sv not in bang_diem:
+        return "khong tim thay sv"
+    mon_no = [mon for mon, diem in bang_diem[ma_sv].items() if diem < 5]
+    return mon_no
+
+bang_diem = {
+    1112233: {'Tin ky thuat': 9.2, 'An toan dien': 8.9, 'The duc': 4.1},
+    1112244: {'Tin ky thuat': 3.7, 'The duc': 9.0}
+}
+
+print("SV 1112233 môn nợ:", mon_no(1112233, bang_diem))
+print("SV 1112244 môn nợ:", mon_no(1112244, bang_diem))
