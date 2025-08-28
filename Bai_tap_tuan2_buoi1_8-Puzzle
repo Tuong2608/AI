@@ -1,0 +1,66 @@
+import tkinter as tk
+
+root = tk.Tk()
+root.title("8-Puzzle - Simple UI")
+
+puzzle = [
+    [1, 2, 3],
+    [4, 5, 6],
+    [7, 8, ""]
+]
+
+def find_blank():
+    for i in range(3):
+        for j in range(3):
+            if puzzle[i][j] == "":
+                return i, j
+
+def update_board():
+    for i in range(3):
+        for j in range(3):
+            text = puzzle[i][j]
+            if text == "":
+                labels[i][j].config(text=text, bg="lightgray")
+            else:
+                labels[i][j].config(text=text, bg="white")
+
+def move(event):
+    i, j = find_blank()
+
+    if event.keysym == "Up" and i < 2:  # di chuyển ô trống lên -> đổi với ô dưới
+        puzzle[i][j], puzzle[i+1][j] = puzzle[i+1][j], puzzle[i][j]
+    elif event.keysym == "Down" and i > 0:  # xuống -> đổi với ô trên
+        puzzle[i][j], puzzle[i-1][j] = puzzle[i-1][j], puzzle[i][j]
+    elif event.keysym == "Left" and j < 2:  # trái -> đổi với ô phải
+        puzzle[i][j], puzzle[i][j+1] = puzzle[i][j+1], puzzle[i][j]
+    elif event.keysym == "Right" and j > 0:  # phải -> đổi với ô trái
+        puzzle[i][j], puzzle[i][j-1] = puzzle[i][j-1], puzzle[i][j]
+
+    update_board()
+
+title = tk.Label(root, text="8-Puzzle", font=("Arial", 18, "bold"))
+title.pack(pady=10)
+
+board = tk.Frame(root, bg="black", padx=2, pady=2)
+board.pack(padx=20, pady=20)
+
+labels = []
+for i in range(3):
+    row = []
+    for j in range(3):
+        frame = tk.Frame(board, width=60, height=60, bg="white", relief="ridge", bd=2)
+        frame.grid(row=i, column=j, padx=2, pady=2)
+
+        text = puzzle[i][j]
+        lbl = tk.Label(frame, text=text, font=("Arial", 18, "bold"), width=2, height=1)
+        lbl.pack(expand=True)
+        row.append(lbl)
+    labels.append(row)
+
+root.bind("<Up>", move)
+root.bind("<Down>", move)
+root.bind("<Left>", move)
+root.bind("<Right>", move)
+
+update_board()
+root.mainloop()
