@@ -1,0 +1,222 @@
+import tkinter as tk
+from tkinter import messagebox
+import heapq
+from collections import deque
+
+N = 8
+CELL_SIZE = 60
+
+def parse_goal_input(s):
+    s = s.strip()
+    if not s:
+        return []
+    parts = s.split()
+    if len(parts) == N:
+        try:
+            vals = [int(x) - 1 for x in parts]
+        except:
+            raise ValueError("Goal must be numbers 1..8")
+        if any(v < 0 or v >= N for v in vals):
+            raise ValueError("Goal values must be 1..8")
+        return vals
+    if len(s) == N and all(ch.isdigit() for ch in s):
+        vals = [int(ch) - 1 for ch in s]
+        if any(v < 0 or v >= N for v in vals):
+            raise ValueError("Goal values must be 1..8")
+        return vals
+    raise ValueError("Goal must be 8 numbers (either spaced or contiguous) or empty")
+
+def is_goal(state, goal_list):
+    if not goal_list:
+        return len(state) == N
+    return len(state) == N and state == goal_list
+
+def is_safe_partial(cols, row, col):
+    for r in range(len(cols)):
+        c = cols[r]
+        if c == col or abs(c - col) == abs(r - row):
+            return False
+    return True
+
+def dfs(n, start, goal_list):
+    stack = [start.copy()]
+    best_state = start.copy()
+    while stack:
+        state = stack.pop()
+        if len(state) > len(best_state):
+            best_state = state.copy()
+        if is_goal(state, goal_list):
+            return state, True
+        row = len(state)
+        if row < n:
+            for col in range(n-1, -1, -1):
+                if is_safe_partial(state, row, col):
+                    stack.append(state + [col])
+    return best_state, False
+
+def bfs(n, start, goal_list):
+    queue = deque([start.copy()])
+    best_state = start.copy()
+    while queue:
+        state = queue.popleft()
+        if len(state) > len(best_state):
+            best_state = state.copy()
+        if is_goal(state, goal_list):
+            return state, True
+        row = len(state)
+        if row < n:
+            for col in range(n):
+                if is_safe_partial(state, row, col):
+                    queue.append(state + [col])
+    return best_state, False
+
+def ucs(n, start, goal_list):
+    frontier = [(len(start), start.copy())]
+    best_state = start.copy()
+    while frontier:
+        cost, state = heapq.heappop(frontier)
+        if len(state) > len(best_state):
+            best_state = state.copy()
+        if is_goal(state, goal_list):
+            return state, True
+        row = len(state)
+        if row < n:
+            for col in range(n):
+                if is_safe_partial(state, row, col):
+                    heapq.heappush(frontier, (cost+1, state + [col]))
+    return best_state, False
+
+def dls(state, row, limit, n, goal_list, best_state_container):
+    if len(state) > len(best_state_container[0]):
+        best_state_container[0] = state.copy()
+    if is_goal(state, goal_list):
+        return state, True
+    if row == n:
+        return None, False
+    if row == limit:
+        return None, False
+    for col in range(n):
+        if is_safe_partial(state, row, col):
+            result, found = dls(state + [col], row+1, limit, n, goal_list, best_state_container)
+            if found:
+                return result, True
+    return None, False
+
+def ids(n, start, goal_list):
+    best_state = start.copy()
+    for limit in range(n+1):
+        container = [best_state.copy()]
+        result, found = dls(start, len(start), limit, n, goal_list, container)
+        if len(container[0]) > len(best_state):
+            best_state = container[0].copy()
+        if found:
+            return result, True
+    return best_state, False
+
+def draw_board(canvas, queens=None):
+    canvas.delete("all")
+    for i in range(N):
+        for j in range(N):
+            x1, y1 = j * CELL_SIZE, i * CELL_SIZE
+            x2, y2 = x1 + CELL_SIZE, y1 + CELL_SIZE
+            color = "#EEEED2" if (i + j) % 2 == 0 else "#769656"
+            canvas.create_rectangle(x1, y1, x2, y2, fill=color, outline="black")
+    if queens:
+        for r, c in enumerate(queens):
+            if c is not None:
+                x, y = c * CELL_SIZE + CELL_SIZE//2, r * CELL_SIZE + CELL_SIZE//2
+                canvas.create_text(x, y, text="♛", font=("Arial", 32, "bold"), fill="red")
+
+def animate_solution(canvas, solution):
+    draw_board(canvas, [None]*N)
+    queens = []
+    delay = 300
+    for r, c in enumerate(solution):
+        queens.append(c)
+        state = queens.copy() + [None]*(N-len(queens))
+        canvas.after(r*delay, lambda st=state: draw_board(canvas, st))
+
+def on_click(event):
+    global start_state
+    row, col = event.y // CELL_SIZE, event.x // CELL_SIZE
+    if row < N and col < N:
+        if len(start_state) <= row:
+            while len(start_state) < row:
+                start_state.append(None)
+            start_state.append(col)
+        else:
+            if start_state[row] == col:
+                start_state = start_state[:row]
+            else:
+                start_state[row] = col
+        draw_board(canvas, start_state)
+
+def clear_board():
+    global start_state
+    start_state = []
+    draw_board(canvas, None)
+
+def run_algorithm(alg_name):
+    raw = entry_goal.get().strip()
+    try:
+        goal_list = parse_goal_input(raw)
+    except ValueError as e:
+        messagebox.showerror("Lỗi", f"Goal không hợp lệ: {e}")
+        return
+
+    start = [c for c in start_state if c is not None]
+    for r, c in enumerate(start):
+        if not is_safe_partial(start[:r], r, c):
+            messagebox.showerror("Lỗi", "Trạng thái ban đầu không hợp lệ (các hậu ăn nhau).")
+            return
+
+    if alg_name == "DFS":
+        sol, found = dfs(N, start, goal_list)
+    elif alg_name == "BFS":
+        sol, found = bfs(N, start, goal_list)
+    elif alg_name == "UCS":
+        sol, found = ucs(N, start, goal_list)
+    elif alg_name == "DLS":
+        best = [start.copy()]
+        res, found = dls(start, len(start), N, N, goal_list, best)
+        if found:
+            sol = res
+        else:
+            sol = best[0]
+    elif alg_name == "IDS":
+        sol, found = ids(N, start, goal_list)
+    else:
+        sol, found = None, False
+
+    if sol:
+        animate_solution(canvas, sol)
+        if not found:
+            messagebox.showinfo("Kết quả", f"{alg_name} không tìm thấy nghiệm. Hiển thị trạng thái tốt nhất.")
+    else:
+        messagebox.showinfo("Kết quả", f"{alg_name} không tìm thấy nghiệm.")
+
+root = tk.Tk()
+root.title("8 Queens - DFS/BFS/UCS/DLS/IDS (Canvas + Animation)")
+
+tk.Label(root, text="Goal (8 số, cách nhau bằng khoảng trắng, hoặc để trống):").pack(pady=5)
+entry_goal = tk.Entry(root, width=40)
+entry_goal.pack(pady=5)
+
+frame_buttons = tk.Frame(root)
+frame_buttons.pack(pady=5)
+
+for alg in ["DFS", "BFS", "UCS", "DLS", "IDS"]:
+    tk.Button(frame_buttons, text=alg, width=8,
+              command=lambda a=alg: run_algorithm(a)).pack(side="left", padx=5)
+
+tk.Button(root, text="Xóa hết", width=10, command=clear_board).pack(pady=5)
+
+canvas = tk.Canvas(root, width=N*CELL_SIZE, height=N*CELL_SIZE)
+canvas.pack(pady=10)
+
+canvas.bind("<Button-1>", on_click)
+
+start_state = []
+draw_board(canvas, None)
+
+root.mainloop()
